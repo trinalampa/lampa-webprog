@@ -1,0 +1,7 @@
+@import './assets/styles/index.css';
+
+.article-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
