@@ -1,5 +1,5 @@
-import reportCat from '../assets/report.jpg';
-import Button from '../components/Button';
+import reportCat from '../../assets/report.jpg';
+import Button from '../../components/Button';
 
 const AboutPage = () => {
   return (

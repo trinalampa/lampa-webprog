@@ -1,9 +1,8 @@
-import Button from '../components/Button';
-import cryingCat from '../assets/crying-cat.jpg';
-import dramaticCat from '../assets/dramatic-cat.jpg';
-import punchingCat from '../assets/punching-cat.jpg';
-import happyLeafCat from '../assets/happy-leaf-cat.jpg';
-
+import Button from '../../components/Button';
+import cryingCat from '../../assets/crying-cat.jpg';
+import dramaticCat from '../../assets/dramatic-cat.jpg';
+import punchingCat from '../../assets/punching-cat.jpg';
+import happyLeafCat from '../../assets/happy-leaf-cat.jpg';
 const stats = [
   { value: '05', label: 'Cat Memes' },
   { value: '01', label: 'Crying Cats' },

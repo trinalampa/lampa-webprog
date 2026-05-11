@@ -69,6 +69,25 @@ const NavBar = () => {
         <li>
           <NavLink to="/articles" style={({ isActive }) => linkStyle(isActive)}>Articles</NavLink>
         </li>
+        <li>
+          <Link
+            to="/auth/signin"
+            style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '12px',
+              fontWeight: '600',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              color: '#fff',
+              background: '#1a1a1a',
+              padding: '7px 18px',
+              borderRadius: '999px',
+              textDecoration: 'none',
+            }}
+          >
+            Log In
+          </Link>
+        </li>
       </ul>
     </nav>
   );
