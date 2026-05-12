@@ -1,5 +1,7 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
+import { createUser } from '../../services/UserService';
 
 const inputStyle = {
   width: '100%',
@@ -16,9 +18,48 @@ const inputStyle = {
 };
 
 const SignUpPage = () => {
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    try {
+      await createUser({
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+        age: '',
+        gender: '',
+        contactNumber: '',
+        username: form.email.split('@')[0].toLowerCase(),
+        address: '',
+        type: 'viewer',
+        isActive: true,
+      });
+      setSuccess('Account created! Redirecting to login...');
+      setTimeout(() => navigate('/auth/signin'), 1500);
+    } catch (err) {
+      setError(err.response?.data?.message ?? 'Sign up failed. Please try again.');
+    }
+  };
+
   return (
     <>
-      {/* Cat logo */}
       <div style={{ marginBottom: '2rem' }}>
         <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="55" r="38" fill="black"/>
@@ -39,13 +80,16 @@ const SignUpPage = () => {
       </div>
 
       <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a1a', marginBottom: '0.4rem' }}>
-        Create an account 
+        Create an account
       </h1>
       <p style={{ fontSize: '13px', color: '#888', marginBottom: '2rem', lineHeight: '1.6' }}>
         Join Cat Memes and never miss a chaotic cat moment.
       </p>
 
-      <form style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {error && <p style={{ color: 'red', fontSize: '13px', marginBottom: '1rem' }}>{error}</p>}
+      {success && <p style={{ color: 'green', fontSize: '13px', marginBottom: '1rem' }}>{success}</p>}
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div>
             <label htmlFor="first-name" style={{ fontSize: '13px', fontWeight: '500', color: '#555', display: 'block', marginBottom: '0.4rem' }}>
@@ -53,9 +97,13 @@ const SignUpPage = () => {
             </label>
             <input
               id="first-name"
+              name="firstName"
               type="text"
               placeholder="Juan"
               autoComplete="given-name"
+              value={form.firstName}
+              onChange={handleChange}
+              required
               style={inputStyle}
               onFocus={e => e.target.style.borderColor = '#1a1a1a'}
               onBlur={e => e.target.style.borderColor = '#d0d0d0'}
@@ -67,9 +115,13 @@ const SignUpPage = () => {
             </label>
             <input
               id="last-name"
+              name="lastName"
               type="text"
               placeholder="dela Cruz"
               autoComplete="family-name"
+              value={form.lastName}
+              onChange={handleChange}
+              required
               style={inputStyle}
               onFocus={e => e.target.style.borderColor = '#1a1a1a'}
               onBlur={e => e.target.style.borderColor = '#d0d0d0'}
@@ -83,9 +135,13 @@ const SignUpPage = () => {
           </label>
           <input
             id="signup-email"
+            name="email"
             type="email"
             placeholder="you@example.com"
             autoComplete="email"
+            value={form.email}
+            onChange={handleChange}
+            required
             style={inputStyle}
             onFocus={e => e.target.style.borderColor = '#1a1a1a'}
             onBlur={e => e.target.style.borderColor = '#d0d0d0'}
@@ -98,9 +154,13 @@ const SignUpPage = () => {
           </label>
           <input
             id="signup-password"
+            name="password"
             type="password"
             placeholder="••••••••"
             autoComplete="new-password"
+            value={form.password}
+            onChange={handleChange}
+            required
             style={inputStyle}
             onFocus={e => e.target.style.borderColor = '#1a1a1a'}
             onBlur={e => e.target.style.borderColor = '#d0d0d0'}

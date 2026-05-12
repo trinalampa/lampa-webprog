@@ -11,8 +11,16 @@ import SignUpPage from './pages/AuthPages/SignUpPage';
 import DashboardPage from './pages/DashboardPages/DashboardPage';
 import ReportsPage from './pages/DashboardPages/ReportsPage';
 import UsersPage from './pages/DashboardPages/UsersPage';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import DashArticleListPage from './pages/DashboardPages/DashArticleListPage';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import NotFoundPage from './pages/NotFoundPage';
+
+const ProtectedRoute = ({ element, allowedRoles }) => {
+  const type = localStorage.getItem('type');
+  if (!type) return <Navigate to="/auth/signin" replace />;
+  if (!allowedRoles.includes(type)) return <Navigate to="/dashboard" replace />;
+  return element;
+};
 
 const routes = [
   {
@@ -42,7 +50,24 @@ const routes = [
     children: [
       { path: '', element: <DashboardPage /> },
       { path: 'reports', element: <ReportsPage /> },
-      { path: 'users', element: <UsersPage /> },
+      {
+        path: 'articles',
+        element: (
+          <ProtectedRoute
+            element={<DashArticleListPage />}
+            allowedRoles={['admin', 'editor']}
+          />
+        ),
+      },
+      {
+        path: 'users',
+        element: (
+          <ProtectedRoute
+            element={<UsersPage />}
+            allowedRoles={['admin']}
+          />
+        ),
+      },
     ],
   },
 ];

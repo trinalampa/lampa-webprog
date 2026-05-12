@@ -1,5 +1,7 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
+import { loginUser } from '../../services/UserService';
 
 const inputStyle = {
   width: '100%',
@@ -16,6 +18,24 @@ const inputStyle = {
 };
 
 const SignInPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await loginUser({ email, password });
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('firstName', data.firstName);
+      localStorage.setItem('type', data.type);
+      navigate('/dashboard', { state: { firstName: data.firstName, type: data.type } });
+    } catch (err) {
+      setError(err.response?.data?.message ?? 'Login failed. Please try again.');
+    }
+  };
+
   return (
     <>
       {/* Cat logo */}
@@ -39,13 +59,20 @@ const SignInPage = () => {
       </div>
 
       <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a1a', marginBottom: '0.4rem' }}>
-        Welcome back 
+        Welcome back
       </h1>
       <p style={{ fontSize: '13px', color: '#888', marginBottom: '2rem', lineHeight: '1.6' }}>
         Log in to your Cat Memes account.
       </p>
 
-      <form style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {error && (
+        <p style={{ color: 'red', fontSize: '13px', marginBottom: '1rem' }}>{error}</p>
+      )}
+
+      <form
+        style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+        onSubmit={handleLogin}
+      >
         <div>
           <label htmlFor="signin-email" style={{ fontSize: '13px', fontWeight: '500', color: '#555', display: 'block', marginBottom: '0.4rem' }}>
             Email Address
@@ -55,6 +82,9 @@ const SignInPage = () => {
             type="email"
             placeholder="you@example.com"
             autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
             style={inputStyle}
             onFocus={e => e.target.style.borderColor = '#1a1a1a'}
             onBlur={e => e.target.style.borderColor = '#d0d0d0'}
@@ -70,6 +100,9 @@ const SignInPage = () => {
             type="password"
             placeholder="••••••••"
             autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
             style={inputStyle}
             onFocus={e => e.target.style.borderColor = '#1a1a1a'}
             onBlur={e => e.target.style.borderColor = '#d0d0d0'}

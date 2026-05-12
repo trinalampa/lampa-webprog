@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent,
   DialogTitle, FormControlLabel, IconButton, InputAdornment, MenuItem,
@@ -10,7 +10,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import { DataGrid } from '@mui/x-data-grid';
-import usersSeed from '../../data/users.json';
+import { fetchUsers, createUser, updateUser, deleteUser } from '../../services/UserService';
 
 const roles = ['admin', 'editor', 'viewer'];
 const genders = ['male', 'female', 'other'];
@@ -25,38 +25,12 @@ const blankForm = {
 const labelize = (value) =>
   value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : '';
 
-const loadUsers = () => {
-  try {
-    return {
-      users: usersSeed.map((user, index) => ({
-        id: index + 1,
-        firstName: String(user.firstName ?? '').trim(),
-        lastName: String(user.lastName ?? '').trim(),
-        age: String(user.age ?? '').trim(),
-        gender: genders.includes(String(user.gender ?? '').trim().toLowerCase())
-          ? String(user.gender ?? '').trim().toLowerCase() : '',
-        contactNumber: String(user.contactNumber ?? '').trim(),
-        email: String(user.email ?? '').trim().toLowerCase(),
-        role: roles.includes(String(user.role ?? '').trim().toLowerCase())
-          ? String(user.role ?? '').trim().toLowerCase() : 'editor',
-        username: String(user.username ?? '').trim().toLowerCase(),
-        password: String(user.password ?? '').trim(),
-        address: String(user.address ?? '').trim(),
-        isActive: typeof user.isActive === 'boolean' ? user.isActive : true,
-      })),
-      error: '',
-    };
-  } catch {
-    return { users: [], error: 'Unable to read users from src/data/users.json.' };
-  }
-};
-
-const seed = loadUsers();
-
 const UsersPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [users, setUsers] = useState(seed.users);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
   const [modal, setModal] = useState({ open: false, id: null });
   const [form, setForm] = useState(blankForm);
   const [errors, setErrors] = useState({});
@@ -65,6 +39,37 @@ const UsersPage = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [filterGender, setFilterGender] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+
+  const loadUsers = async () => {
+    setLoading(true);
+    try {
+      const { data } = await fetchUsers();
+      const mapped = data.users.map((user) => ({
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        age: user.age,
+        gender: user.gender,
+        contactNumber: user.contactNumber,
+        email: user.email,
+        role: user.type,
+        username: user.username,
+        password: user.password,
+        address: user.address,
+        isActive: user.isActive,
+      }));
+      setUsers(mapped);
+      setApiError('');
+    } catch (err) {
+      setApiError(err.response?.data?.message ?? 'Failed to load users.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -166,46 +171,48 @@ const UsersPage = () => {
     return nextErrors;
   };
 
-  // ── KEY FIX: no longer relies on form submit event ──
-  const handleSave = () => {
+  const handleSave = async () => {
     const nextErrors = validate();
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors);
       return;
     }
 
-    const newUser = {
+    const payload = {
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       age: form.age.trim(),
       gender: form.gender.trim().toLowerCase(),
       contactNumber: form.contactNumber.trim(),
       email: form.email.trim().toLowerCase(),
-      role: form.role.trim().toLowerCase(),
+      type: form.role.trim().toLowerCase(),
       username: form.username.trim().toLowerCase(),
       password: form.password,
       address: form.address.trim(),
       isActive: form.isActive,
     };
 
-    if (modal.id !== null) {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === modal.id ? { ...u, ...newUser } : u))
-      );
-    } else {
-      setUsers((prev) => {
-        const nextId = prev.reduce((max, u) => Math.max(max, Number(u.id) || 0), 0) + 1;
-        return [...prev, { id: nextId, ...newUser }];
-      });
+    try {
+      if (modal.id !== null) {
+        await updateUser(modal.id, payload);
+      } else {
+        await createUser(payload);
+      }
+      await loadUsers();
+      closeModal();
+    } catch (err) {
+      setApiError(err.response?.data?.message ?? 'Failed to save user.');
     }
-
-    closeModal();
   };
 
-  const toggleStatus = (id) =>
-    setUsers((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, isActive: !u.isActive } : u))
-    );
+  const toggleStatus = async (id, currentStatus) => {
+    try {
+      await updateUser(id, { isActive: !currentStatus });
+      await loadUsers();
+    } catch (err) {
+      setApiError(err.response?.data?.message ?? 'Failed to update status.');
+    }
+  };
 
   const fieldProps = (name, label, extra = {}) => ({
     name,
@@ -257,7 +264,7 @@ const UsersPage = () => {
           <Button
             size="small" variant="contained"
             color={row.isActive ? 'warning' : 'success'}
-            onClick={() => toggleStatus(row.id)}
+            onClick={() => toggleStatus(row.id, row.isActive)}
           >
             {row.isActive ? 'Disable' : 'Activate'}
           </Button>
@@ -273,9 +280,8 @@ const UsersPage = () => {
         <Button variant="contained" onClick={() => openModal()}>Add User</Button>
       </Box>
 
-      {seed.error ? <Alert severity="error" sx={{ mb: 2 }}>{seed.error}</Alert> : null}
+      {apiError ? <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert> : null}
 
-      {/* Enhancement 2 — Search & Filters */}
       <Paper sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ xs: 'stretch', md: 'center' }}>
           <TextField
@@ -323,7 +329,7 @@ const UsersPage = () => {
       </Paper>
 
       <Paper sx={{ p: { xs: 1.5, sm: 2 }, minWidth: 0, overflow: 'hidden' }}>
-        {filteredUsers.length ? (
+        {!loading && filteredUsers.length ? (
           <Box sx={{ height: { xs: 460, sm: 520 }, width: '100%', minWidth: 0 }}>
             <DataGrid
               rows={filteredUsers}
@@ -336,14 +342,13 @@ const UsersPage = () => {
           </Box>
         ) : (
           <Alert severity="info">
-            {users.length === 0
+            {loading ? 'Loading users...' : users.length === 0
               ? 'No users found. Use Add User to create your first record.'
               : 'No users match the current search and filters.'}
           </Alert>
         )}
       </Paper>
 
-      {/* Add / Edit Dialog — no form tag, button uses onClick directly */}
       <Dialog open={modal.open} onClose={closeModal} fullWidth fullScreen={isMobile} maxWidth="md">
         <DialogTitle>{modal.id !== null ? 'Edit User' : 'Add User'}</DialogTitle>
         <DialogContent dividers sx={{ px: { xs: 2, sm: 3 } }}>
@@ -398,7 +403,6 @@ const UsersPage = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={closeModal}>Cancel</Button>
-          {/* ── KEY FIX: onClick instead of type="submit" ── */}
           <Button variant="contained" onClick={handleSave}>
             {modal.id !== null ? 'Update User' : 'Save User'}
           </Button>

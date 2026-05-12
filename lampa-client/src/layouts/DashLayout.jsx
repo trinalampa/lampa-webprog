@@ -17,20 +17,34 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import PeopleIcon from '@mui/icons-material/People';
+import ArticleIcon from '@mui/icons-material/Article';
 import Button from '@mui/material/Button';
 
 const drawerWidth = 240;
 
-const navItems = [
-  { label: 'Dashboard', to: '/dashboard', icon: <DashboardIcon /> },
-  { label: 'Reports', to: '/dashboard/reports', icon: <AssessmentIcon /> },
-  { label: 'Users', to: '/dashboard/users', icon: <PeopleIcon /> },
+const allNavItems = [
+  { label: 'Dashboard', to: '/dashboard', icon: <DashboardIcon />, roles: ['admin', 'editor', 'viewer'] },
+  { label: 'Reports', to: '/dashboard/reports', icon: <AssessmentIcon />, roles: ['admin', 'editor', 'viewer'] },
+  { label: 'Articles', to: '/dashboard/articles', icon: <ArticleIcon />, roles: ['admin', 'editor'] },
+  { label: 'Users', to: '/dashboard/users', icon: <PeopleIcon />, roles: ['admin'] },
 ];
 
 const DashLayout = () => {
   const [open, setOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const userType = localStorage.getItem('type') || 'viewer';
+  const firstName = localStorage.getItem('firstName') || 'User';
+
+  const navItems = allNavItems.filter((item) => item.roles.includes(userType));
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('firstName');
+    localStorage.removeItem('type');
+    navigate('/auth/signin');
+  };
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -45,9 +59,9 @@ const DashLayout = () => {
             {open ? <ChevronLeftIcon /> : <MenuIcon />}
           </IconButton>
           <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
-            {navItems.find(item => item.to === location.pathname)?.label || 'Dashboard'}
+            Welcome, {firstName}
           </Typography>
-          <Button color="inherit" variant="outlined" onClick={() => navigate('/')}>
+          <Button color="inherit" variant="outlined" onClick={handleLogout}>
             Logout
           </Button>
         </Toolbar>
