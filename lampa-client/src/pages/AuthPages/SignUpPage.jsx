@@ -228,7 +228,7 @@ const SignUpPage = () => {
         </Link>
       </div>
     </>
-  );
+  );z
 };
 
 export default SignUpPage;
