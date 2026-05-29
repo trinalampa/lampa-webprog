@@ -1,8 +1,27 @@
+import { useState, useEffect } from 'react';
 import Button from '../../components/Button';
 import ArticleList from '../../components/ArticleList';
-import articles from '../../assets/article-content.js';
+import { fetchArticles } from '../../services/ArticleService';
 
 const ArticleListPage = () => {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading]   = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data } = await fetchArticles();
+        const active = data.articles.filter((a) => a.isActive);
+        setArticles(active);
+      } catch (err) {
+        console.error('Failed to load articles', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
   return (
     <div style={{ display: 'flex', width: '100%', flexDirection: 'column' }}>
       <section style={{ background: '#f5f5f5', borderBottom: '1px solid #e0e0e0', padding: '3rem' }}>
@@ -27,7 +46,13 @@ const ArticleListPage = () => {
         <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1a1a1a', marginBottom: '1.5rem' }}>
           Article card grid
         </h2>
-        <ArticleList articles={articles} />
+        {loading ? (
+          <p style={{ color: '#888', fontSize: '13px' }}>Loading articles...</p>
+        ) : articles.length === 0 ? (
+          <p style={{ color: '#888', fontSize: '13px' }}>No articles available yet.</p>
+        ) : (
+          <ArticleList articles={articles} />
+        )}
       </section>
     </div>
   );

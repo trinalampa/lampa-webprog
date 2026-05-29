@@ -17,14 +17,32 @@ const inputStyle = {
   transition: 'border-color 0.15s',
 };
 
+const selectStyle = {
+  ...inputStyle,
+  cursor: 'pointer',
+};
+
+const labelStyle = {
+  fontSize: '13px',
+  fontWeight: '500',
+  color: '#555',
+  display: 'block',
+  marginBottom: '0.4rem',
+};
+
 const SignUpPage = () => {
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
+    age: '',
+    gender: '',
+    contactNumber: '',
     email: '',
     password: '',
+    username: '',
+    address: '',
   });
-  const [error, setError] = useState('');
+  const [error, setError]     = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
@@ -37,19 +55,36 @@ const SignUpPage = () => {
     setError('');
     setSuccess('');
 
+    if (!/^\d+$/.test(form.age.trim())) {
+      setError('Age must be a number.');
+      return;
+    }
+    if (!/^\d{11}$/.test(form.contactNumber.trim())) {
+      setError('Contact number must be exactly 11 digits.');
+      return;
+    }
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (/\s/.test(form.username.trim())) {
+      setError('Username must not contain spaces.');
+      return;
+    }
+
     try {
       await createUser({
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        email: form.email.trim().toLowerCase(),
-        password: form.password,
-        age: '',
-        gender: '',
-        contactNumber: '',
-        username: form.email.split('@')[0].toLowerCase(),
-        address: '',
-        type: 'viewer',
-        isActive: true,
+        firstName:     form.firstName.trim(),
+        lastName:      form.lastName.trim(),
+        age:           form.age.trim(),
+        gender:        form.gender.trim().toLowerCase(),
+        contactNumber: form.contactNumber.trim(),
+        email:         form.email.trim().toLowerCase(),
+        password:      form.password,
+        username:      form.username.trim().toLowerCase(),
+        address:       form.address.trim(),
+        type:          'viewer',
+        isActive:      true,
       });
       setSuccess('Account created! Redirecting to login...');
       setTimeout(() => navigate('/auth/signin'), 1500);
@@ -57,6 +92,9 @@ const SignUpPage = () => {
       setError(err.response?.data?.message ?? 'Sign up failed. Please try again.');
     }
   };
+
+  const focus = (e) => (e.target.style.borderColor = '#1a1a1a');
+  const blur  = (e) => (e.target.style.borderColor = '#d0d0d0');
 
   return (
     <>
@@ -86,88 +124,88 @@ const SignUpPage = () => {
         Join Cat Memes and never miss a chaotic cat moment.
       </p>
 
-      {error && <p style={{ color: 'red', fontSize: '13px', marginBottom: '1rem' }}>{error}</p>}
+      {error   && <p style={{ color: 'red',   fontSize: '13px', marginBottom: '1rem' }}>{error}</p>}
       {success && <p style={{ color: 'green', fontSize: '13px', marginBottom: '1rem' }}>{success}</p>}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div>
-            <label htmlFor="first-name" style={{ fontSize: '13px', fontWeight: '500', color: '#555', display: 'block', marginBottom: '0.4rem' }}>
-              First Name
-            </label>
-            <input
-              id="first-name"
-              name="firstName"
-              type="text"
-              placeholder="Juan"
-              autoComplete="given-name"
-              value={form.firstName}
-              onChange={handleChange}
-              required
-              style={inputStyle}
-              onFocus={e => e.target.style.borderColor = '#1a1a1a'}
-              onBlur={e => e.target.style.borderColor = '#d0d0d0'}
-            />
+            <label htmlFor="firstName" style={labelStyle}>First Name</label>
+            <input id="firstName" name="firstName" type="text" placeholder="Juan"
+              value={form.firstName} onChange={handleChange} required
+              style={inputStyle} onFocus={focus} onBlur={blur} />
           </div>
           <div>
-            <label htmlFor="last-name" style={{ fontSize: '13px', fontWeight: '500', color: '#555', display: 'block', marginBottom: '0.4rem' }}>
-              Last Name
-            </label>
-            <input
-              id="last-name"
-              name="lastName"
-              type="text"
-              placeholder="dela Cruz"
-              autoComplete="family-name"
-              value={form.lastName}
-              onChange={handleChange}
-              required
-              style={inputStyle}
-              onFocus={e => e.target.style.borderColor = '#1a1a1a'}
-              onBlur={e => e.target.style.borderColor = '#d0d0d0'}
-            />
+            <label htmlFor="lastName" style={labelStyle}>Last Name</label>
+            <input id="lastName" name="lastName" type="text" placeholder="dela Cruz"
+              value={form.lastName} onChange={handleChange} required
+              style={inputStyle} onFocus={focus} onBlur={blur} />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label htmlFor="age" style={labelStyle}>Age</label>
+            <input id="age" name="age" type="text" placeholder="20"
+              value={form.age} onChange={handleChange} required
+              style={inputStyle} onFocus={focus} onBlur={blur} />
+          </div>
+          <div>
+            <label htmlFor="gender" style={labelStyle}>Gender</label>
+            <select id="gender" name="gender" value={form.gender}
+              onChange={handleChange} required
+              style={selectStyle} onFocus={focus} onBlur={blur}>
+              <option value="" disabled>Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
           </div>
         </div>
 
         <div>
-          <label htmlFor="signup-email" style={{ fontSize: '13px', fontWeight: '500', color: '#555', display: 'block', marginBottom: '0.4rem' }}>
-            Email
-          </label>
-          <input
-            id="signup-email"
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-            autoComplete="email"
-            value={form.email}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-            onFocus={e => e.target.style.borderColor = '#1a1a1a'}
-            onBlur={e => e.target.style.borderColor = '#d0d0d0'}
-          />
+          <label htmlFor="contactNumber" style={labelStyle}>Contact Number</label>
+          <input id="contactNumber" name="contactNumber" type="text" placeholder="09XXXXXXXXX"
+            value={form.contactNumber} onChange={handleChange} required
+            style={inputStyle} onFocus={focus} onBlur={blur} />
+          <p style={{ fontSize: '11px', color: '#aaa', marginTop: '0.4rem' }}>
+            Must be exactly 11 digits.
+          </p>
         </div>
 
         <div>
-          <label htmlFor="signup-password" style={{ fontSize: '13px', fontWeight: '500', color: '#555', display: 'block', marginBottom: '0.4rem' }}>
-            Password
-          </label>
-          <input
-            id="signup-password"
-            name="password"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="new-password"
-            value={form.password}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-            onFocus={e => e.target.style.borderColor = '#1a1a1a'}
-            onBlur={e => e.target.style.borderColor = '#d0d0d0'}
-          />
+          <label htmlFor="signup-email" style={labelStyle}>Email</label>
+          <input id="signup-email" name="email" type="email" placeholder="you@example.com"
+            autoComplete="email" value={form.email} onChange={handleChange} required
+            style={inputStyle} onFocus={focus} onBlur={blur} />
+        </div>
+
+        <div>
+          <label htmlFor="username" style={labelStyle}>Username</label>
+          <input id="username" name="username" type="text" placeholder="juandelacruz"
+            value={form.username} onChange={handleChange} required
+            style={inputStyle} onFocus={focus} onBlur={blur} />
           <p style={{ fontSize: '11px', color: '#aaa', marginTop: '0.4rem' }}>
-            Use a secure password with letters, numbers, and symbols.
+            No spaces allowed.
           </p>
+        </div>
+
+        <div>
+          <label htmlFor="signup-password" style={labelStyle}>Password</label>
+          <input id="signup-password" name="password" type="password" placeholder="••••••••"
+            autoComplete="new-password" value={form.password} onChange={handleChange} required
+            style={inputStyle} onFocus={focus} onBlur={blur} />
+          <p style={{ fontSize: '11px', color: '#aaa', marginTop: '0.4rem' }}>
+            At least 8 characters with letters, numbers, and symbols.
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="address" style={labelStyle}>Address</label>
+          <textarea id="address" name="address" placeholder="123 Main St, City"
+            value={form.address} onChange={handleChange} required rows={3}
+            style={{ ...inputStyle, resize: 'vertical' }} onFocus={focus} onBlur={blur} />
         </div>
 
         <Button type="submit" variant="primary">Create Account</Button>

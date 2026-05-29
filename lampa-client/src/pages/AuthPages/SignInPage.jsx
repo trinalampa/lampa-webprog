@@ -27,6 +27,13 @@ const SignInPage = () => {
     e.preventDefault();
     try {
       const { data } = await loginUser({ email, password });
+
+      // Enhancement 1: viewers are not allowed to log in to the dashboard
+      if (data.type === 'viewer') {
+        setError('Your account does not have permission to access the dashboard.');
+        return;
+      }
+
       localStorage.setItem('token', data.token);
       localStorage.setItem('firstName', data.firstName);
       localStorage.setItem('type', data.type);
