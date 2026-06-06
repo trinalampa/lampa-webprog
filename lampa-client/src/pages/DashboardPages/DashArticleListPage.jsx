@@ -15,6 +15,7 @@ const blankForm = {
   slug: '',
   title: '',
   content: '',
+  image: '',
   isActive: true,
 };
 
@@ -40,6 +41,7 @@ const DashArticleListPage = () => {
         title: article.title,
         content: Array.isArray(article.content) ? article.content.join(' ') : article.content,
         paragraphs: Array.isArray(article.content) ? article.content.length : 1,
+        image: article.image ?? '',
         isActive: article.isActive,
       }));
       setArticles(mapped);
@@ -73,7 +75,13 @@ const DashArticleListPage = () => {
   const openModal = (article) => {
     setModal({ open: true, id: article?.id ?? null });
     setForm(article
-      ? { slug: article.slug, title: article.title, content: article.content, isActive: article.isActive }
+      ? {
+          slug: article.slug,
+          title: article.title,
+          content: article.content,
+          image: article.image ?? '',
+          isActive: article.isActive,
+        }
       : { ...blankForm }
     );
     setErrors({});
@@ -109,6 +117,7 @@ const DashArticleListPage = () => {
       slug: form.slug.trim(),
       title: form.title.trim(),
       content: form.content.split('\n').filter((p) => p.trim() !== ''),
+      image: form.image.trim(),
       isActive: form.isActive,
     };
 
@@ -248,6 +257,9 @@ const DashArticleListPage = () => {
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField {...fieldProps('slug', 'Slug')} />
             <TextField {...fieldProps('title', 'Title')} />
+            <TextField {...fieldProps('image', 'Image URL', {
+              helperText: errors.image || 'Paste a full image URL (e.g. https://example.com/cat.jpg)',
+            })} />
             <TextField {...fieldProps('content', 'Content', {
               multiline: true,
               rows: 6,
