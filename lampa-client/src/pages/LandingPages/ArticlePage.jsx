@@ -1,10 +1,37 @@
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Button from '../../components/Button';
-import articles from '../../assets/article-content.js';
+import { fetchArticles } from '../../services/ArticleService';
 
 function ArticlePage() {
   const { name } = useParams();
-  const article = articles.find(article => article.name === name);
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data } = await fetchArticles();
+        const found = data.articles.find((a) => a.slug === name);
+        setArticle(found ?? null);
+      } catch (err) {
+        console.error('Failed to load article', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [name]);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', width: '100%', flexDirection: 'column' }}>
+        <section style={{ background: '#f5f5f5', padding: '3rem' }}>
+          <p style={{ color: '#888', fontSize: '13px' }}>Loading article...</p>
+        </section>
+      </div>
+    );
+  }
 
   if (!article) {
     return (
@@ -21,6 +48,10 @@ function ArticlePage() {
     );
   }
 
+  const contentArray = Array.isArray(article.content)
+    ? article.content
+    : [article.content];
+
   return (
     <div style={{ display: 'flex', width: '100%', flexDirection: 'column' }}>
       <section style={{ background: '#f5f5f5', borderBottom: '1px solid #e0e0e0', padding: '3rem' }}>
@@ -35,23 +66,25 @@ function ArticlePage() {
             {article.title}
           </h1>
           <p style={{ fontSize: '13px', color: '#888' }}>
-            {article.name.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+            {article.slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
           </p>
         </div>
       </section>
 
       <section style={{ background: '#f5f5f5', padding: '3rem' }}>
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-          <div style={{ aspectRatio: '16/9', borderRadius: '16px', overflow: 'hidden', border: '1.5px solid #c8c8c8', marginBottom: '2rem' }}>
-            <img
-              src={article.image}
-              alt={article.title}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          </div>
+          {article.image && (
+            <div style={{ aspectRatio: '16/9', borderRadius: '16px', overflow: 'hidden', border: '1.5px solid #c8c8c8', marginBottom: '2rem' }}>
+              <img
+                src={article.image}
+                alt={article.title}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+          )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {article.content.map((paragraph, index) => (
+            {contentArray.map((paragraph, index) => (
               <p key={index} style={{ fontSize: '15px', color: '#444', lineHeight: '1.8', whiteSpace: 'pre-wrap' }}>
                 {paragraph}
               </p>
