@@ -4,6 +4,7 @@ const articleSchema = new mongoose.Schema({
   slug: { type: String, required: true, unique: true },
   title: { type: String, required: true },
   content: [{ type: String }],
+  image: { type: String, default: '' },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
